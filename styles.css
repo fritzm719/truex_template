@@ -1,0 +1,106 @@
+#container, 
+#container div, 
+#container img {
+
+	-webkit-user-select: none; /* Chrome/Safari */        
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+ */
+	
+	/* Rules below not implemented in browsers yet */
+	-o-user-select: none;
+	user-select: none;
+
+}
+
+#container, 
+#container div {
+	-webkit-tap-highlight-color: rgba(0,0,0,0); 
+}
+
+#container {
+	width: 960px;
+	height: 500px;
+	background: #000 url(bg0.jpg) no-repeat;
+	overflow: hidden;
+    position: absolute;
+}
+
+.center {
+	left: 0px;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	margin: auto;
+}
+
+.full {
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    position: absolute;
+}
+
+.video_holder {
+	background-color: rgba(153, 153, 153, 0.5);
+	background-size: cover;
+}
+
+video {
+	object-fit: cover;
+}
+
+.video_holder__overlay {
+	cursor: pointer;
+    background-color: rgba(0,0,0,0.25);
+    overflow: hidden;
+}
+
+.play {
+	width: 0;
+	height: 0;
+	border-left: 40px solid #fff;
+	border-top: 23px solid transparent;
+	border-bottom: 23px solid transparent;
+    position: absolute;
+}
+
+.play::after {
+	content:'';
+	border: 6px solid #fff;
+	width: 100px;
+	height: 100px;
+	border-radius: 50px;
+	display: block;
+	box-sizing: border-box;
+	transform: translate(-75%,-50%);
+}
+
+.pad::after {
+    content:'';
+    position: absolute;
+    padding: 20px;
+    left: -20px;
+    top: -20px;
+    width: 100%;
+    height: 100%;
+}
+
+.round {
+    background-color: rgba(0,0,0,0.75);
+    width: 135px;
+    height: 135px;
+    border-radius: 68px;
+    right: -12px;
+    top: calc((100% - 135px)/2);
+    position: absolute;
+}
+
+.round > div {
+    position: absolute;
+}
+
+.sprite { background: url('sprite.png') no-repeat top left;  } 
+.sprite.cta0 { background-position: 0 0; width: 96px; height: 87px; } 
+.sprite.cta1 { background-position: 0 -91px; width: 95px; height: 91px; } 
+.sprite.cta2 { background-position: 0 -186px; width: 82px; height: 89px; } 
