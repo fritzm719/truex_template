@@ -239,7 +239,7 @@ const TXVideo = (function (obj) {
 	}
 
 	function play () {
-        if(!initPlaying && !TXM.params.autoplay_with_sound_disabled){
+        if(!initPlaying && TXM.params.autoplay_with_sound_disabled){
             checkMutedAutoplaySupport();
         }else{
             unMute();
@@ -760,7 +760,7 @@ const TXCreative = (function () {
         TXVideo.load();
 		addListeners();
         TXVideo.play();
-        //safTXVast.init('Video');
+        //TXVast.init('Video');
 		/*
 		TXM.api.incrementCurrentStep();
 		TXM.api.setCurrentStep(2);
