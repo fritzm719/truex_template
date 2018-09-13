@@ -38,11 +38,10 @@
     height: 100%;
     left: 0;
     top: 0;
-    position: absolute;
 }
 
 .video_holder {
-	background-color: rgba(153, 153, 153, 0.5);
+	background-color: #000;
 	background-size: cover;
 }
 
@@ -54,6 +53,7 @@ video {
 	cursor: pointer;
     background-color: rgba(0,0,0,0.25);
     overflow: hidden;
+    transform: translateZ(1px);
 }
 
 .play {
@@ -100,7 +100,18 @@ video {
     position: absolute;
 }
 
-.sprite { background: url('sprite.png') no-repeat top left;  } 
+.abs,
+.abs div {
+    position: absolute;
+}
+
+.sprite { background: url(https://media.truex.com/image_assets/2018-08-23/fa3d9fe0-406f-48e0-a2d5-98e577f764c0.png) no-repeat top left;  } 
 .sprite.cta0 { background-position: 0 0; width: 96px; height: 87px; } 
 .sprite.cta1 { background-position: 0 -91px; width: 95px; height: 91px; } 
 .sprite.cta2 { background-position: 0 -186px; width: 82px; height: 89px; } 
+
+#ads_container {
+    left: 0;
+    top: -20px;
+    position: absolute;
+}

@@ -1,25 +1,25 @@
 const TXConfig = (function () {
 	const creativeImages = 
 	[
-		
+		'sprite.png'
 	];
 
     const creativeScripts = 
 	[
-        'https://cdnjs.cloudflare.com/ajax/libs/gsap/2.0.1/plugins/CSSPlugin.min.js',
-		'https://cdnjs.cloudflare.com/ajax/libs/gsap/2.0.1/easing/EasePack.min.js',
-		'https://cdnjs.cloudflare.com/ajax/libs/gsap/2.0.1/TweenLite.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/gsap/2.0.2/plugins/CSSPlugin.min.js',
+		'https://cdnjs.cloudflare.com/ajax/libs/gsap/2.0.2/easing/EasePack.min.js',
+		'https://cdnjs.cloudflare.com/ajax/libs/gsap/2.0.2/TweenLite.min.js',
 		'https://imasdk.googleapis.com/js/sdkloader/ima3.js'
 	];
 
 	const creativeCSS = 
 	[
 		'edit/styles.css'
-        //'https://media.truex.com/file_assets/2018-02-26/447e5bc5-4d08-41a8-9cf5-423c081429b7.css'
+        //'https://media.truex.com/file_assets/2018-08-23/50c0d3f5-92e6-4378-896f-bf007296e518.css'
 	];
 
 	const creativeHTML = 'edit/markup.html';
-	//const creativeHTML = 'edit/markup.html';
+	//const creativeHTML = 'https://media.truex.com/file_assets/2018-08-23/d4a1fe2e-25fa-4df9-a44b-497e39fd73fc.html';
 	let markupContainer;
 	let loadedAssets = 0;
 	const totalAssets = 1 + creativeImages.length + creativeScripts.length + creativeCSS.length;
@@ -200,13 +200,15 @@ const TXVideo = (function (obj) {
 	let $video;
 	let $videoOverlay;
 	let $videoPlayer;
-    let initPlaying=false;
+    let initPlay=false;
+    let autoplayAllowed=false;
+    let autoplayRequiresMuted=false;
 
 	function init () {
         $videoOverlay = $( '.video_holder__overlay' );
 		$videoPlayer  = $( '#video_player' );
         $video = $('#video0');
-        addListeners();
+        //addListeners();
 	}
     
     function parseId(s){
@@ -215,6 +217,8 @@ const TXVideo = (function (obj) {
     
     function load(){
         reset();
+        autoplayAllowed=false;
+        $videoPlayer.css('visibility','hidden');
         $videoOverlay.hide();
 		$video.html('<source type="video/mp4" src="'+(parseId(VideoData.getData().id) || 'https://media.truex.com/video_assets/2018-02-15/1b9aca2f-fdfc-42b6-a130-92888f8752ff_large.mp4')+'" />');
 		$video.load();
@@ -222,31 +226,32 @@ const TXVideo = (function (obj) {
     
     function addListeners(){
 		$video.on( 'play', videoStarted );
+		$video.on( 'canplay', videoCanPlay );
 		$video.on( 'pause', videoPaused );
 		$video.on( 'ended', videoEnded );
 		$video.on( 'timeupdate', videoProgress );
         $videoOverlay.on('click',clickVideo);
-        //$(window).on('focus',videoFocus);
+        $(window).on('focus',videoFocus);
     }
 
 	function destroy () {
 		$video.off( 'play', videoStarted );
+		$video.off( 'canplay', videoCanPlay );
 		$video.off( 'pause', videoPaused );
 		$video.off( 'ended', videoEnded );
 		$video.off( 'timeupdate', videoProgress );
         $videoOverlay.off('click',clickVideo);
-        //$(window).off('focus',videoFocus);
+        $(window).off('focus',videoFocus);
 	}
 
 	function play () {
-        if(!initPlaying && TXM.params.autoplay_with_sound_disabled){
+        if(!TXVideo.initPlay && TXM.params.autoplay_with_sound_disabled){
             checkMutedAutoplaySupport();
         }else{
+            autoplayRequiresMuted=false;
             unMute();
             $videoOverlay.hide();
-            $videoOverlay.html('<div class="play center"></div>');
-            $videoPlayer.show();
-            initPlaying=true;
+            TXVideo.initPlay=true;
             $video.get(0).play();
         }
     }
@@ -260,14 +265,14 @@ const TXVideo = (function (obj) {
     }
     
     function onMutedAutoplaySuccess() {
-        initPlaying=true;
+        autoplayRequiresMuted=true;
         $videoOverlay.show();
         $videoOverlay.html('<div class="round"><div class="sprite cta0 center"></div></div>');
     }
 
     function onMutedAutoplayFail() {
+        autoplayRequiresMuted=false;
         unMute();
-        $videoPlayer.hide();
         $videoOverlay.show();
         $videoOverlay.html('<div class="play center"></div>');
     }
@@ -285,41 +290,46 @@ const TXVideo = (function (obj) {
         $video.get(0).volume=1;
         $video.get(0).muted=false;
     }
-
-	function replay () {
-		TXM.api.track( 'multimedia', 'video_replay', VideoData.getData().id );
-		play();
-	}
 	
 	function clickVideo(){
-		if(!VideoData.getData().replay){
-            initPlaying=true;
-			play();
-		}else{
-			replay();
-        }
+		TXVideo.initPlay=true;
+        play();
 	}
     
-    /*function videoFocus(){
-        if(videoStart){
-            clickVideo();
-        }
-    }*/
+    function videoFocus(){
+        if(VideoData.getData().replay) return;
+        play();
+    }
 
 	function videoStarted () {
-		if (videoStart) return;
+        if(VideoData.getData().replay) {
+            TXM.api.track( 'multimedia', 'video_replay', VideoData.getData().id );
+        }
+        VideoData.getData().replay=false;
+        if(autoplayAllowed) {
+            $videoPlayer.css('visibility','visible');
+            if(!autoplayRequiresMuted) $videoOverlay.hide();
+        }
+		if(videoStart) return;
 		videoStart = true;
         TXM.api.track( 'multimedia', 'video_started', VideoData.getData().id );
         ext.dispatchEvent(STARTED,{});
 	}
     
+    function videoCanPlay(){
+        autoplayAllowed=true;
+        $videoPlayer.css('visibility','visible');
+    }
+    
     function videoPaused (){
         $videoOverlay.show();
+        $videoOverlay.html('<div class="play center"></div>');
     }
 
 	function videoEnded () {
-		$videoPlayer.hide();
-		$videoOverlay.show();
+        VideoData.getData().replay=true;
+        TXVideo.initPlay=true;
+		$videoPlayer.css('visibility','hidden');
 		$video.get(0).pause();
         $videoOverlay.html('<div class="sprite replay center"></div>');
 
@@ -332,7 +342,6 @@ const TXVideo = (function (obj) {
 				document.webkitExitFullscreen();
 			}
 		}
-
 		TXM.api.track( 'multimedia', 'video_completed', VideoData.getData().id );
         setTimeout(reset,100);
         ext.dispatchEvent(ENDED,{});
@@ -366,6 +375,7 @@ const TXVideo = (function (obj) {
     ext.play = play;
     ext.pause = pause;
     ext.load = load;
+    ext.initPlay = initPlay;
     
     return ext;
 
@@ -408,6 +418,7 @@ const TXVast = (function (obj) {
         isInit=true;
         TXVast.isPlaying=false;
         adsManagerLoaded=false;
+        $videoPlayer.css('visibility','hidden');
 	  	// Create the ad display container.
 	  	createAdDisplayContainer();
 	  	// Create ads loader.
@@ -472,7 +483,6 @@ const TXVast = (function (obj) {
     
     function autoplayChecksResolved() {
         if(autoplayAllowed){
-            $videoPlayer.show();
             if(autoplayRequiresMuted){
                 $videoOverlay.show();
                 $videoOverlay.html('<div class="round"><div class="sprite cta0 center"></div></div>');
@@ -480,7 +490,6 @@ const TXVast = (function (obj) {
                 $videoOverlay.hide();
             }
         }else{
-            $videoPlayer.hide();
             $videoOverlay.show();
             $videoOverlay.html('<div class="play center"></div>');
         }
@@ -520,7 +529,6 @@ const TXVast = (function (obj) {
     }
 
 	function playAds() {
-        $videoPlayer.show();
         try {
 			// Initialize the ads manager. Ad rules playlist will start at this time.
 			adsManager.init(vidWidth, vidHeight, google.ima.ViewMode.NORMAL);
@@ -583,12 +591,11 @@ const TXVast = (function (obj) {
 			case google.ima.AdEvent.Type.LOADED:
 		  		break;
 			case google.ima.AdEvent.Type.STARTED:
-                TXVast.isPlaying=true;
 		  		TXM.api.track( 'multimedia', 'video_started', TXVast.id);
-                ext.dispatchEvent(STARTED,{});
-		  		break;
             case google.ima.AdEvent.Type.RESUMED:
-                $videoOverlay.hide();
+                if(TXVast.isPlaying) $videoOverlay.hide();
+                TXVast.isPlaying=true;
+                $videoPlayer.css('visibility','visible');
                 ext.dispatchEvent(STARTED,{});
 		  		break;
 			case google.ima.AdEvent.Type.FIRST_QUARTILE:
@@ -752,15 +759,12 @@ const TXAudio = (function () {
 const TXCreative = (function () {
     
 	function render () {
-        if(TXUtil.isMobile.any()){
-            $('head').append('<meta http-equiv="Content-Security-Policy" content="default-src *; style-src "self" http://* "unsafe-inline" ; media-src * ;img-src * "self" http:// *"unsafe-inline";script-src "self" http://* https://* "unsafe-inline" "unsafe-eval""/>');
-        }
         VideoData.add('Video');
         TXVideo.init();
         TXVideo.load();
 		addListeners();
-        TXVideo.play();
-        //TXVast.init('Video');
+        //TXVideo.play();
+        TXVast.init('Vast Video');
 		/*
 		TXM.api.incrementCurrentStep();
 		TXM.api.setCurrentStep(2);
@@ -781,15 +785,19 @@ const TXCreative = (function () {
         TXVideo.removeEventListener(TXVideo.ENDED,videoEndHandler);
 	}
     
+    function checkInteraction(){
+        if(TXVideo.initPlay) return;
+        $('.video_holder__overlay').click();
+    }
+    
     function videoStartHandler(e){
-        VideoData.getData().replay=false;
+        
     }
     
     function videoEndHandler(e){
         if(VideoData.getData().id.search('Replay')<0){
             VideoData.getData().id+=' Replay';
         }
-        VideoData.getData().replay=true;
     }
     
     function soundHandler(e){
@@ -872,6 +880,14 @@ const TXUtil = (function () {
 		const $e=($.type(s)==='string') ? $(s) : s;
 		$e.css('pointer-events','auto');
 	}
+    
+    function getBoundWidth(){
+        return $('#container').width()/document.getElementById('container').getBoundingClientRect().width;
+    }
+    
+    function getBoundHeight(){
+        return $('#container').height()/document.getElementById('container').getBoundingClientRect().height;
+    }
 	
 	return {
 		formatLabel : formatLabel,
@@ -879,7 +895,9 @@ const TXUtil = (function () {
 		show 		: show,
 		disable 	: disable,
 		enable		: enable,
-		isMobile	: isMobile
+		isMobile	: isMobile,
+        getBoundWidth : getBoundWidth,
+        getBoundHeight : getBoundHeight
 	};
 })();
 
